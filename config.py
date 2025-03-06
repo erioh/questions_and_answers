@@ -9,8 +9,8 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 OLLAMA_API_URL = os.getenv('OLLAMA_API_URL', 'http://localhost:11434')
 
 # Model Configuration
-OPENAI_MODEL = "gpt-3.5-turbo"
-OLLAMA_MODEL = "llama2"
+OPENAI_MODEL = "gpt-4o-mini"
+OLLAMA_MODEL = "llama3.1:8b"
 
 # Generation Settings
 MAX_TOKENS = 1000

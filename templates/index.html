@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Generate Question-Answer Pairs</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('generate_qa') }}">
+                    <div class="mb-3">
+                        <label for="text" class="form-label">Input Text</label>
+                        <textarea class="form-control" id="text" name="text" rows="6" required></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="num_questions" class="form-label">Number of Questions</label>
+                        <input type="number" class="form-control" id="num_questions" name="num_questions" 
+                               min="1" max="20" value="5" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Model</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="model" id="openai" value="openai" checked>
+                            <label class="form-check-label" for="openai">
+                                ChatGPT (OpenAI)
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="model" id="ollama" value="ollama">
+                            <label class="form-check-label" for="ollama">
+                                Llama (Ollama)
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-magic"></i> Generate QA Pairs
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if qa_pairs %}
+<div class="row mt-4">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h4 class="mb-0">Generated QA Pairs</h4>
+                <button class="btn btn-sm btn-success" onclick="downloadJSON()">
+                    <i class="fas fa-download"></i> Download JSON
+                </button>
+            </div>
+            <div class="card-body">
+                <div id="qa-pairs">
+                    {% for pair in qa_pairs %}
+                    <div class="qa-pair mb-4">
+                        <h5>Q: {{ pair.question }}</h5>
+                        <p class="text-muted">A: {{ pair.answer }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function downloadJSON() {
+    const qaPairs = {{ qa_pairs | tojson | safe }};
+    const dataStr = JSON.stringify(qaPairs, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'qa_pairs.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+}
+</script>
+{% endif %}
+{% endblock %} 

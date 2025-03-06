@@ -21,32 +21,78 @@ class QAGenerator:
     
     def _generate_with_openai(self, text: str, max_questions: int) -> List[Dict[str, str]]:
         """Generate QA pairs using OpenAI API."""
-        prompt = f"""Given the following text, generate {max_questions} question-answer pairs.
-        Format each pair as a JSON object with 'question' and 'answer' fields.
-        Make questions diverse and challenging.
-        
-        Text:
-        {text}
-        
-        Generate the QA pairs in the following format:
-        [
-            {{"question": "Q1", "answer": "A1"}},
-            {{"question": "Q2", "answer": "A2"}},
-            ...
-        ]
+        system_prompt = """You are a question-answer pair generator. Your task is to generate question-answer pairs from the given text.
+        Follow these rules strictly:
+        1. Generate exactly the requested number of questions
+        2. Format your response as a valid JSON array
+        3. Each item in the array must have exactly two fields: "question" and "answer"
+        4. Do not include any text before or after the JSON array
+        5. Ensure the JSON is properly formatted with double quotes for strings
+        6. Make questions diverse and challenging
         """
         
-        response = self.client.chat.completions.create(
-            model=config.OPENAI_MODEL,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=config.TEMPERATURE,
-            max_tokens=config.MAX_TOKENS
-        )
+        user_prompt = f"""Generate {max_questions} question-answer pairs from this text:
+        
+        {text}
+        
+        Format your response as a JSON array like this:
+        [
+            {{"question": "What is...", "answer": "The answer is..."}},
+            {{"question": "How does...", "answer": "The process..."}},
+            ...
+        ]"""
         
         try:
-            return json.loads(response.choices[0].message.content)
-        except json.JSONDecodeError:
-            print("Error: Failed to parse OpenAI response as JSON")
+            response = self.client.chat.completions.create(
+                model=config.OPENAI_MODEL,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=config.TEMPERATURE,
+                max_tokens=config.MAX_TOKENS
+            )
+            
+            # Get the response content
+            content = response.choices[0].message.content.strip()
+            
+            # Try to find JSON array in the response
+            start_idx = content.find('[')
+            end_idx = content.rfind(']')
+            
+            if start_idx == -1 or end_idx == -1:
+                print("Error: No JSON array found in response")
+                return []
+            
+            # Extract and parse the JSON array
+            json_str = content[start_idx:end_idx + 1]
+            qa_pairs = json.loads(json_str)
+            
+            # Validate the structure
+            if not isinstance(qa_pairs, list):
+                print("Error: Response is not a JSON array")
+                return []
+            
+            # Validate each QA pair
+            valid_pairs = []
+            for pair in qa_pairs:
+                if isinstance(pair, dict) and 'question' in pair and 'answer' in pair:
+                    valid_pairs.append({
+                        'question': str(pair['question']).strip(),
+                        'answer': str(pair['answer']).strip()
+                    })
+            
+            if not valid_pairs:
+                print("Error: No valid QA pairs found in response")
+                return []
+            
+            return valid_pairs
+            
+        except json.JSONDecodeError as e:
+            print(f"Error: Failed to parse JSON - {str(e)}")
+            return []
+        except Exception as e:
+            print(f"Error: Unexpected error - {str(e)}")
             return []
     
     def _generate_with_ollama(self, text: str, max_questions: int) -> List[Dict[str, str]]:
@@ -108,7 +154,6 @@ if __name__ == "__main__":
     parser.add_argument('input_file', help='Input text file')
     parser.add_argument('output_file', help='Output JSON file name')
     parser.add_argument('max_questions', help='Maximum number of questions to generate')
-
     parser.add_argument('--use-ollama', action='store_true', help='Use Ollama instead of OpenAI')
     
     args = parser.parse_args()

@@ -1,14 +1,16 @@
 # Question-Answer Generator for Llama Fine-tuning
 
-This application generates question-answer pairs from text input using either OpenAI's GPT or Ollama's Llama model. The generated pairs are formatted in a way that's suitable for fine-tuning Llama models.
+A web application that generates question-answer pairs from text input using either OpenAI's GPT or Ollama's Llama model. The generated pairs are formatted in a way that's suitable for fine-tuning Llama models.
 
 ## Features
 
+- Web-based interface for easy interaction
 - Generate question-answer pairs from text input
 - Support for both OpenAI GPT and Ollama APIs
-- Configurable generation parameters
+- Configurable number of questions
 - JSON output format suitable for fine-tuning
-- Command-line interface
+- Download generated QA pairs as JSON
+- Modern, responsive UI with loading indicators
 
 ## Setup
 
@@ -25,23 +27,26 @@ OLLAMA_API_URL=http://localhost:11434  # Optional, defaults to this value
 
 3. If using Ollama, make sure you have Ollama installed and running locally with the Llama model pulled.
 
+4. Set up the Flask secret key in `app.py` (change the default value for production).
+
 ## Usage
 
-### Basic Usage
-
-Generate QA pairs using OpenAI (default):
+1. Start the Flask application:
 ```bash
-python qa_generator.py input.txt output.json
+python app.py
 ```
 
-Generate QA pairs using Ollama:
-```bash
-python qa_generator.py input.txt output.json --use-ollama
-```
+2. Open your web browser and navigate to `http://localhost:5000`
 
-### Output Format
+3. Enter your text, select the number of questions, and choose the model (ChatGPT or Ollama)
 
-The generated QA pairs will be saved in JSON format in the `qa_pairs` directory:
+4. Click "Generate QA Pairs" to process the text
+
+5. View the generated QA pairs and download them as JSON if needed
+
+## Output Format
+
+The generated QA pairs are available in JSON format:
 ```json
 [
   {
@@ -55,9 +60,8 @@ The generated QA pairs will be saved in JSON format in the `qa_pairs` directory:
 ## Configuration
 
 You can modify the following settings in `config.py`:
-- `MAX_QUESTIONS_PER_TEXT`: Number of QA pairs to generate per text
-- `TEMPERATURE`: Controls randomness in generation
 - `MAX_TOKENS`: Maximum tokens for generation
+- `TEMPERATURE`: Controls randomness in generation
 - `OUTPUT_DIR`: Directory for saving generated QA pairs
 
 ## Requirements
